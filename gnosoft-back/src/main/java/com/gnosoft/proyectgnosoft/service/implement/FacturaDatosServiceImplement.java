@@ -6,7 +6,6 @@ package com.gnosoft.proyectgnosoft.service.implement;
 
 
 import com.gnosoft.proyectgnosoft.DAO.FacturaDatosDAO;
-import com.gnosoft.proyectgnosoft.DAO.FacturacionDAO;
 import com.gnosoft.proyectgnosoft.VO.FacturaDatosVO;
 import com.gnosoft.proyectgnosoft.services.FacturaDatosServices;
 import org.springframework.stereotype.Service;
