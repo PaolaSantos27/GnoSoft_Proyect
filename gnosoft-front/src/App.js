@@ -1,13 +1,14 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 import Facturacion from './Facturacion';
 import FacturacionDatos from './FacturacionDatos';
-import ReactDOM from "react-dom/client";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import {
   createBrowserRouter,
   RouterProvider,
 } from "react-router-dom";
+
 
 const router = createBrowserRouter([
   {
@@ -18,13 +19,19 @@ const router = createBrowserRouter([
     path: "/",
     element: <Facturacion />,
   },
+ 
 ]);
 
-const App = () => {
+
+
+function App(){
+
   return (
-    <RouterProvider router={router} />
+    <>
+      <ToastContainer />
+      <RouterProvider router={router} />
+    </>
   )
 }
-
 
 export default App;

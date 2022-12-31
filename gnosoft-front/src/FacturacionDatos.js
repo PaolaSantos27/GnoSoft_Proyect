@@ -1,109 +1,32 @@
-import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
+
+import React, { useEffect, useState } from 'react';
+import { obtenerFacturaDatos, guardarFacturaDatos, actualizarFacturaDatos, eliminarFacturaDatos } from './services/facturacionDatos';
 import {Table, Button, Container,Modal, ModalBody, ModalHeader, FormGroup, ModalFooter} from 'reactstrap';
+import { toast } from 'react-toastify';
 
+const FacturacionDatos = () => {
+  const [facturaDatos, setFacturaDatos] = useState([]);
+  const [modalInsertar, setModalInsertar] = useState(false);
+  const [modalActualizar, setModalActualizar] = useState(false);
+  const [actualizarState, setActualizarState] = useState({
+    idDato: "",
+    idFactura: "",
+    nombre: "",
+    cliente: "",
+    fecha: "",
+    subtotal: "",
+    iva: "",
+    total: "",
+  })
 
-const data = [
-  {id_dato: 1, id_factura: 1, nombre: "Paola", cliente: "Ava", fecha: "2022-09-18", subtotal: 40, iva:2, total:42},
-  {id_dato: 2, id_factura: 3, nombre: "Paola", cliente: "Miguel", fecha: "2022-12-06", subtotal: 18, iva:1, total:19},
-  {id_dato: 3, id_factura: 2, nombre: "Paola", cliente: "Beatriz", fecha: "2022-11-09", subtotal: 15, iva:0, total:15},
-  {id_dato: 4, id_factura: 4, nombre: "Paola", cliente: "Camila", fecha: "2022-11-14", subtotal: 30, iva:0, total:30},
-  ]
+  useEffect(() => {
+        obtenerFacturaDatos().then(setFacturaDatos)
+    }, []);
 
-  class FacturacionDatos extends React.Component {
-    state = {
-      data: data,
-      modalActualizar: false,
-      modalInsertar: false,
-      form: {
-        id_dato: "",
-        id_factura: "",
-        nombre: "",
-        cliente: "",
-        fecha: "",
-        subtotal:"",
-        iva:"",
-        total:"",
-      },
-    };
-  
-    mostrarModalActualizar = (dato) => {
-      this.setState({
-        form: dato,
-        modalActualizar: true,
-      });
-    };
-  
-    cerrarModalActualizar = () => {
-      this.setState({ modalActualizar: false });
-    };
-  
-    mostrarModalInsertar = () => {
-      this.setState({
-        modalInsertar: true,
-      });
-    };
-  
-    cerrarModalInsertar = () => {
-      this.setState({ modalInsertar: false });
-    };
-  
-    editar = (dato) => {
-      var contador = 0;
-      var arreglo = this.state.data;
-      arreglo.map((registro) => {
-        if (dato.id_dato == registro.id_dato) {
-          arreglo[contador].nombre = dato.nombre;
-          arreglo[contador].cliente = dato.cliente;
-          arreglo[contador].fecha = dato.fecha;
-          arreglo[contador].subtotal = dato.subtotal;
-          arreglo[contador].iva = dato.iva;
-          arreglo[contador].total = dato.total;
-        }
-        contador++;
-      });
-      this.setState({ data: arreglo, modalActualizar: false });
-    };
-  
-    eliminar = (dato) => {
-      var opcion = window.confirm("Estás Seguro que deseas Eliminar el elemento "+dato.id_factura);
-      if (opcion == true) {
-        var contador = 0;
-        var arreglo = this.state.data;
-        arreglo.map((registro) => {
-          if (dato.id_dato == registro.id_dato) {
-            arreglo.splice(contador, 1);
-          }
-          contador++;
-        });
-        this.setState({ data: arreglo, modalActualizar: false });
-      }
-    };
-  
-    insertar= ()=>{
-      var valorNuevo= {...this.state.form};
-      valorNuevo.id_dato=this.state.data.length+1;
-      var lista= this.state.data;
-      lista.push(valorNuevo);
-      this.setState({ modalInsertar: false, data: lista });
-    }
-  
-    handleChange = (e) => {
-      this.setState({
-        form: {
-          ...this.state.form,
-          [e.target.name]: e.target.value,
-        },
-      });
-    };
-  
-    render() {
-      
-      return (
-        <>
-          <Container>
+    return (
+      <Container>
           <br />
           <a href='/'>
             <Button color="success">Factura</Button>{"     "}</a>
@@ -126,10 +49,10 @@ const data = [
               </thead>
   
               <tbody>
-                {this.state.data.map((dato) => (
-                  <tr key={dato.id_dato}>
-                    <td>{dato.id_dato}</td>
-                    <td>{dato.id_factura}</td>
+                {facturaDatos.map((dato) => (
+                  <tr key={dato.idDato}>
+                    <td>{dato.idDato}</td>
+                    <td>{dato.idFactura}</td>
                     <td>{dato.nombre}</td>
                     <td>{dato.cliente}</td>
                     <td>{dato.fecha}</td>
@@ -139,51 +62,65 @@ const data = [
                     <td>
                       <Button
                         color="primary"
-                        onClick={() => this.mostrarModalActualizar(dato)}
+                        onClick={() => {
+                          setActualizarState(dato)
+                          setModalActualizar(true)
+                          }}
                       >
                         Editar
                       </Button>{"   "}
-                      <Button color="danger" onClick={()=> this.eliminar(dato)}>Eliminar</Button>
+                      <Button color="danger" onClick={()=> eliminarFacturaDatos(dato.idDato).then(() => {
+                        toast("Datos de facturación eliminados exitosamente.")
+                        obtenerFacturaDatos().then(setFacturaDatos)
+                      })}>Eliminar</Button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </Table>
             <br />
-            <Button color="success" onClick={()=>this.mostrarModalInsertar()}>Crear Factura</Button>
+            <Button color="success" onClick={()=>setModalInsertar(true)}>Crear Factura</Button>
             <br />
-          </Container>
-  
-          <Modal isOpen={this.state.modalActualizar}>
+            <Modal isOpen={modalInsertar}>
+            <form onSubmit={(ev) => {
+                ev.preventDefault()
+                const data = Object.fromEntries(new FormData(ev.target));
+                console.log(data);
+                guardarFacturaDatos(data).then(() => {
+                  toast("Datos de facturación guardada exitosamente.")
+                  obtenerFacturaDatos().then(setFacturaDatos)
+                })
+                
+            }}>
             <ModalHeader>
-             <div><h3>Editar Factura</h3></div>
+             <div><h3>Insertar Factura Datos</h3></div>
             </ModalHeader>
+  
             <ModalBody>
-            <FormGroup>
+              <FormGroup>
                 <label>
                  Id Dato:
                 </label>
               
                 <input
                   className="form-control"
-                  readOnly
+                  name="idDato"
                   type="number"
-                  value={this.state.form.id_dato}
                 />
               </FormGroup>
+              
               <FormGroup>
                 <label>
-                 Id Factura:
+                 Id factura:
                 </label>
               
                 <input
                   className="form-control"
-                  readOnly
+                  name="idFactura"
                   type="number"
-                  value={this.state.form.id_factura}
                 />
               </FormGroup>
-              
+
               <FormGroup>
                 <label>
                   Nombre:
@@ -192,11 +129,9 @@ const data = [
                   className="form-control"
                   name="nombre"
                   type="text"
-                  onChange={this.handleChange}
-                  value={this.state.form.nombre}
                 />
               </FormGroup>
-              
+
               <FormGroup>
                 <label>
                   Cliente:
@@ -205,129 +140,6 @@ const data = [
                   className="form-control"
                   name="cliente"
                   type="text"
-                  onChange={this.handleChange}
-                  value={this.state.form.cliente}
-                />
-              </FormGroup>
-              <FormGroup>
-                <label>
-                  Fecha:
-                </label>
-                <input
-                  className="form-control"
-                  name="fecha"
-                  type="date"
-                  onChange={this.handleChange}
-                  value={this.state.form.fecha}
-                />
-              </FormGroup>
-              <FormGroup>
-                <label>
-                  Subtotal: 
-                </label>
-                <input
-                  className="form-control"
-                  name="subtotal"
-                  type="number"
-                  onChange={this.handleChange}
-                  value={this.state.form.subtotal}
-                />
-              </FormGroup>
-              <FormGroup>
-                <label>
-                  Iva: 
-                </label>
-                <input
-                  className="form-control"
-                  name="iva"
-                  type="number"
-                  onChange={this.handleChange}
-                  value={this.state.form.iva}
-                />
-              </FormGroup>
-              <FormGroup>
-                <label>
-                  Total: 
-                </label>
-                <input
-                  className="form-control"
-                  name="total"
-                  type="number"
-                  onChange={this.handleChange}
-                  value={this.state.form.total}
-                />
-              </FormGroup>
-            </ModalBody>
-  
-            <ModalFooter>
-              <Button
-                color="primary"
-                onClick={() => this.editar(this.state.form)}
-              >
-                Editar
-              </Button>
-              <Button
-                color="danger"
-                onClick={() => this.cerrarModalActualizar()}
-              >
-                Cancelar
-              </Button>
-            </ModalFooter>
-          </Modal>
-  
-  
-  
-          <Modal isOpen={this.state.modalInsertar}>
-            <ModalHeader>
-             <div><h3>Crear Factura</h3></div>
-            </ModalHeader>
-  
-            <ModalBody>
-            <FormGroup>
-                <label>
-                  Id Dato: 
-                </label>
-                
-                <input
-                  className="form-control"
-                  readOnly
-                  type="number"
-                  value={this.state.data.length+1}
-                />
-              </FormGroup>
-              <FormGroup>
-                <label>
-                  Id Factura: 
-                </label>
-                
-                <input
-                  className="form-control"
-                  readOnly
-                  type="number"
-                  value={this.state.data.length+1}
-                />
-              </FormGroup>
-              
-              <FormGroup>
-                <label>
-                  Nombre: 
-                </label>
-                <input
-                  className="form-control"
-                  name="nombre"
-                  type="text"
-                  onChange={this.handleChange}
-                />
-              </FormGroup>
-              <FormGroup>
-                <label>
-                  Cliente: 
-                </label>
-                <input
-                  className="form-control"
-                  name="cliente"
-                  type="text"
-                  onChange={this.handleChange}
                 />
               </FormGroup>
               
@@ -339,7 +151,6 @@ const data = [
                   className="form-control"
                   name="fecha"
                   type="date"
-                  onChange={this.handleChange}
                 />
               </FormGroup>
               <FormGroup>
@@ -350,7 +161,6 @@ const data = [
                   className="form-control"
                   name="subtotal"
                   type="number"
-                  onChange={this.handleChange}
                 />
               </FormGroup>
               <FormGroup>
@@ -361,7 +171,6 @@ const data = [
                   className="form-control"
                   name="iva"
                   type="number"
-                  onChange={this.handleChange}
                 />
               </FormGroup>
               <FormGroup>
@@ -372,7 +181,6 @@ const data = [
                   className="form-control"
                   name="total"
                   type="number"
-                  onChange={this.handleChange}
                 />
               </FormGroup>
             </ModalBody>
@@ -380,20 +188,159 @@ const data = [
             <ModalFooter>
               <Button
                 color="primary"
-                onClick={() => this.insertar()}
-              >
-                Insertar
+                onClick={() => setModalInsertar(false)}
+                type="submit">
+                Guardar
               </Button>
               <Button
-                className="btn btn-danger"
-                onClick={() => this.cerrarModalInsertar()}
+                color="danger"
+                onClick={() => setModalInsertar(false)}
               >
                 Cancelar
               </Button>
             </ModalFooter>
+            </form>
           </Modal>
-        </>
-      );
-    }
-  }
+          <Modal isOpen={modalActualizar}>
+            <form onSubmit={(ev) => {
+                ev.preventDefault()
+                const data = Object.fromEntries(new FormData(ev.target));
+                actualizarFacturaDatos(data).then(() => {
+                  toast("Datos de facturación Actualizados exitosamente.")
+                  obtenerFacturaDatos().then(setFacturaDatos)
+                  setActualizarState({
+                    idDato: "",
+                    idFactura: "",
+                    nombre: "",
+                    cliente: "",
+                    fecha: "",
+                    subtotal: "",
+                    iva: "",
+                    total: "",
+                  })
+                })
+            }}>
+            <ModalHeader>
+             <div><h3>Editar Datos de Factura </h3></div>
+            </ModalHeader>
+  
+            <ModalBody>
+            <FormGroup>
+                <label>
+                 Id Dato:
+                </label>
+              
+                <input
+                  className="form-control"
+                  name="idDato"
+                  readOnly
+                  type="number"
+                  defaultValue={actualizarState.idDato}
+                />
+              </FormGroup>
+              <FormGroup>
+                <label>
+                 Id factura:
+                </label>
+              
+                <input
+                  className="form-control"
+                  name="idFactura"
+                  readOnly
+                  type="number"
+                  defaultValue={actualizarState.idFactura}
+                />
+              </FormGroup>
+              
+              <FormGroup>
+                <label>
+                  Nombre:
+                </label>
+                <input
+                  className="form-control"
+                  name="nombre"
+                  defaultValue={actualizarState.nombre}
+                  type="text"
+                />
+              </FormGroup>
+              
+              <FormGroup>
+                <label>
+                  Cliente: 
+                </label>
+                <input
+                  className="form-control"
+                  name="cliente"
+                  type="text"
+                  defaultValue={actualizarState.cliente}
+                />
+              </FormGroup>
+              <FormGroup>
+                <label>
+                  Fecha: 
+                </label>
+                <input
+                  className="form-control"
+                  name="fecha"
+                  type="date"
+                  defaultValue={actualizarState.fecha}
+                />
+              </FormGroup>
+              <FormGroup>
+                <label>
+                 Subtotal:
+                </label>
+              
+                <input
+                  className="form-control"
+                  name="subtotal"
+                  type="number"
+                  defaultValue={actualizarState.subtotal}
+                />
+              </FormGroup>
+              <FormGroup>
+                <label>
+                 Iva:
+                </label>
+              
+                <input
+                  className="form-control"
+                  name="iva"
+                  type="number"
+                  defaultValue={actualizarState.iva}
+                />
+              </FormGroup>
+              <FormGroup>
+                <label>
+                 Total:
+                </label>
+              
+                <input
+                  className="form-control"
+                  name="total"
+                  type="number"
+                  defaultValue={actualizarState.total}
+                />
+              </FormGroup>
+            </ModalBody>
+  
+            <ModalFooter>
+              <Button
+                color="primary"
+                onClick={() => setModalActualizar(false)}
+                type="submit">
+                Guardar
+              </Button>
+              <Button
+                color="danger"
+                onClick={() => setModalActualizar(false)}>
+                Cancelar
+              </Button>
+            </ModalFooter>
+            </form>
+          </Modal>
+          </Container> 
+    ) 
+}
+  
 export default FacturacionDatos;

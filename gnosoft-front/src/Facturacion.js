@@ -1,102 +1,27 @@
-import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
+
+import React, { useEffect, useState } from 'react';
+import { obtenerFacturacion, guardarFacturacion, actualizarFacturacion, eliminarFacturacion } from './services/facturacion';
 import {Table, Button, Container,Modal, ModalBody, ModalHeader, FormGroup, ModalFooter} from 'reactstrap';
+import { toast } from 'react-toastify';
 
+const Facturacion = () => {
+    const [facturas, setFacturas] = useState([]);
+    const [modalInsertar, setModalInsertar] = useState(false);
+    const [modalActualizar, setModalActualizar] = useState(false);
+    const [actualizarState, setActualizarState] = useState({
+      idFactura: "",
+      articulo: "",
+      cantidad: "",
+      valor: "",
+    })
+    useEffect(() => {
+        obtenerFacturacion().then(setFacturas)
+    }, []);
 
-const data = [
-  {id_factura: 1, articulo: "Tarjeta Netflix (Plan Básico)", cantidad: 2, valor: 40 },
-  {id_factura: 2, articulo: "Tarjeta Spotify (Plan Premium)", cantidad: 1, valor: 15 },
-  {id_factura: 3, articulo: "Subcripcion Youtube (Plan Premium)", cantidad: 1, valor: 18 },
-  {id_factura: 4, articulo: "Tarjeta HBO MAX (Plan Básico)", cantidad: 2, valor: 30 }
-  ]
-
-  class Facturacion extends React.Component {
-    state = {
-      data: data,
-      modalActualizar: false,
-      modalInsertar: false,
-      form: {
-        id_factura: "",
-        articulo: "",
-        cantidad: "",
-        valor: "",
-      },
-    };
-  
-    mostrarModalActualizar = (dato) => {
-      this.setState({
-        form: dato,
-        modalActualizar: true,
-      });
-    };
-  
-    cerrarModalActualizar = () => {
-      this.setState({ modalActualizar: false });
-    };
-  
-    mostrarModalInsertar = () => {
-      this.setState({
-        modalInsertar: true,
-      });
-    };
-  
-    cerrarModalInsertar = () => {
-      this.setState({ modalInsertar: false });
-    };
-  
-    editar = (dato) => {
-      var contador = 0;
-      var arreglo = this.state.data;
-      arreglo.map((registro) => {
-        if (dato.id_factura == registro.id_factura) {
-          arreglo[contador].articulo = dato.articulo;
-          arreglo[contador].cantidad = dato.cantidad;
-          arreglo[contador].valor = dato.valor;
-        }
-        contador++;
-      });
-      this.setState({ data: arreglo, modalActualizar: false });
-    };
-  
-    eliminar = (dato) => {
-      var opcion = window.confirm("Estás Seguro que deseas Eliminar el elemento "+dato.id_factura);
-      if (opcion == true) {
-        var contador = 0;
-        var arreglo = this.state.data;
-        arreglo.map((registro) => {
-          if (dato.id_factura == registro.id_factura) {
-            arreglo.splice(contador, 1);
-          }
-          contador++;
-        });
-        this.setState({ data: arreglo, modalActualizar: false });
-      }
-    };
-  
-    insertar= ()=>{
-      var valorNuevo= {...this.state.form};
-      valorNuevo.id_factura=this.state.data.length+1;
-      var lista= this.state.data;
-      lista.push(valorNuevo);
-      this.setState({ modalInsertar: false, data: lista });
-    }
-  
-    handleChange = (e) => {
-      this.setState({
-        form: {
-          ...this.state.form,
-          [e.target.name]: e.target.value,
-        },
-      });
-    };
-  
-    render() {
-      
-      return (
-        <>
-          <Container>
+    return (
+        <Container>
           <br />
           <a href='/'>
             <Button color="success">Factura</Button>{"     "}</a>
@@ -116,30 +41,127 @@ const data = [
               </thead>
   
               <tbody>
-                {this.state.data.map((dato) => (
-                  <tr key={dato.id_factura}>
-                    <td>{dato.id_factura}</td>
+                {facturas.map((dato) => (
+                  <tr key={dato.idFactura}>
+                    <td>{dato.idFactura}</td>
                     <td>{dato.articulo}</td>
                     <td>{dato.cantidad}</td>
                     <td>{dato.valor}</td>
                     <td>
                       <Button
                         color="primary"
-                        onClick={() => this.mostrarModalActualizar(dato)}>
+                        onClick={() => {
+                          setActualizarState(dato)
+                          setModalActualizar(true)
+                          }}>
                         Editar
                       </Button>{"   "}
-                      <Button color="danger" onClick={()=> this.eliminar(dato)}>Eliminar</Button>
+                      <Button color="danger" onClick={()=> {
+                        eliminarFacturacion(dato.idFactura).then(() => {
+                          toast("La factura se ha eliminado exitosamente.")
+                          obtenerFacturacion().then(setFacturas)
+                        })
+                      }}>Eliminar</Button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </Table>
             <br />
-            <Button color="success" onClick={()=>this.mostrarModalInsertar()}>Crear Factura</Button>
+            <Button color="success" onClick={()=>setModalInsertar(true)}>Crear Factura</Button>
             <br />
-          </Container>
+            <Modal isOpen={modalInsertar}>
+            <form onSubmit={(ev) => {
+                ev.preventDefault()
+                const data = Object.fromEntries(new FormData(ev.target));
+                console.log(data);
+                guardarFacturacion(data).then(() => {
+                  toast("La factura se ha guardado exitosamente.")
+                    obtenerFacturacion().then(setFacturas)
+                })
+                
+                
+            }}>
+            <ModalHeader>
+             <div><h3>Insertar Factura</h3></div>
+            </ModalHeader>
   
-          <Modal isOpen={this.state.modalActualizar}>
+            <ModalBody>
+              <FormGroup>
+                <label>
+                 Id factura:
+                </label>
+              
+                <input
+                  className="form-control"
+                  name="idFactura"
+                  type="number"
+                />
+              </FormGroup>
+              
+              <FormGroup>
+                <label>
+                  Articulo:
+                </label>
+                <input
+                  className="form-control"
+                  name="articulo"
+                  type="text"
+                />
+              </FormGroup>
+              
+              <FormGroup>
+                <label>
+                  Cantidad: 
+                </label>
+                <input
+                  className="form-control"
+                  name="cantidad"
+                  type="number"
+                />
+              </FormGroup>
+              <FormGroup>
+                <label>
+                  Valor: 
+                </label>
+                <input
+                  className="form-control"
+                  name="valor"
+                  type="number"
+                />
+              </FormGroup>
+            </ModalBody>
+  
+            <ModalFooter>
+              <Button
+                color="primary"
+                onClick={() => setModalInsertar(false)}
+                type="submit">
+                Guardar
+              </Button>
+              <Button
+                color="danger"
+                onClick={() => setModalInsertar(false)}>
+                Cancelar
+              </Button>
+            </ModalFooter>
+            </form>
+          </Modal>
+          <Modal isOpen={modalActualizar}>
+            <form onSubmit={(ev) => {
+                ev.preventDefault()
+                const data = Object.fromEntries(new FormData(ev.target));
+                actualizarFacturacion(data).then(() => {
+                  toast("La factura se ha actualizado exitosamente.")
+                  obtenerFacturacion().then(setFacturas)
+                  setActualizarState({
+                    idFactura: "",
+                    articulo: "",
+                    cantidad: "",
+                    valor: "",
+                  })
+                })
+            }}>
             <ModalHeader>
              <div><h3>Editar Factura</h3></div>
             </ModalHeader>
@@ -152,9 +174,10 @@ const data = [
               
                 <input
                   className="form-control"
+                  name="idFactura"
                   readOnly
                   type="number"
-                  value={this.state.form.id_factura}
+                  defaultValue={actualizarState.idFactura}
                 />
               </FormGroup>
               
@@ -165,9 +188,8 @@ const data = [
                 <input
                   className="form-control"
                   name="articulo"
+                  defaultValue={actualizarState.articulo}
                   type="text"
-                  onChange={this.handleChange}
-                  value={this.state.form.articulo}
                 />
               </FormGroup>
               
@@ -179,8 +201,7 @@ const data = [
                   className="form-control"
                   name="cantidad"
                   type="number"
-                  onChange={this.handleChange}
-                  value={this.state.form.cantidad}
+                  defaultValue={actualizarState.cantidad}
                 />
               </FormGroup>
               <FormGroup>
@@ -191,8 +212,7 @@ const data = [
                   className="form-control"
                   name="valor"
                   type="number"
-                  onChange={this.handleChange}
-                  value={this.state.form.valor}
+                  defaultValue={actualizarState.valor}
                 />
               </FormGroup>
             </ModalBody>
@@ -200,93 +220,20 @@ const data = [
             <ModalFooter>
               <Button
                 color="primary"
-                onClick={() => this.editar(this.state.form)}
-              >
-                Editar
+                onClick={() => setModalActualizar(false)}
+                type="submit">
+                Guardar
               </Button>
               <Button
                 color="danger"
-                onClick={() => this.cerrarModalActualizar()}
-              >
+                onClick={() => setModalActualizar(false)}>
                 Cancelar
               </Button>
             </ModalFooter>
+            </form>
           </Modal>
-  
-  
-  
-          <Modal isOpen={this.state.modalInsertar}>
-            <ModalHeader>
-             <div><h3>Insertar Factura</h3></div>
-            </ModalHeader>
-  
-            <ModalBody>
-              <FormGroup>
-                <label>
-                  Id Factura: 
-                </label>
-                
-                <input
-                  className="form-control"
-                  readOnly
-                  type="number"
-                  value={this.state.data.length+1}
-                />
-              </FormGroup>
-              
-              <FormGroup>
-                <label>
-                  Articulo: 
-                </label>
-                <input
-                  className="form-control"
-                  name="articulo"
-                  type="text"
-                  onChange={this.handleChange}
-                />
-              </FormGroup>
-              
-              <FormGroup>
-                <label>
-                  Cantidad: 
-                </label>
-                <input
-                  className="form-control"
-                  name="cantidad"
-                  type="number"
-                  onChange={this.handleChange}
-                />
-              </FormGroup>
-              <FormGroup>
-                <label>
-                  Valor: 
-                </label>
-                <input
-                  className="form-control"
-                  name="valor"
-                  type="number"
-                  onChange={this.handleChange}
-                />
-              </FormGroup>
-            </ModalBody>
-  
-            <ModalFooter>
-              <Button
-                color="primary"
-                onClick={() => this.insertar()}
-              >
-                Insertar
-              </Button>
-              <Button
-                className="btn btn-danger"
-                onClick={() => this.cerrarModalInsertar()}
-              >
-                Cancelar
-              </Button>
-            </ModalFooter>
-          </Modal>
-        </>
-      );
-    }
-  }
+          </Container>
+          )
+        }
+ 
 export default Facturacion;
