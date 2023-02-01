@@ -10,18 +10,20 @@ package com.gnosoft.proyectgnosoft.VO;
  */
 import java.io.Serializable;
 
-public class FacturacionVO implements Serializable {
-    private Integer idFactura;
+public class DetalleVO implements Serializable {
+    private Integer idDetalle;
     private String articulo;
     private Integer cantidad;
     private Integer valor;
+    private Integer idFactura;
 
-    public Integer getIdFactura() {
-        return idFactura;
+
+    public Integer getIdDetalle() {
+        return idDetalle;
     }
 
-    public void setIdFactura(Integer idFactura) {
-        this.idFactura = idFactura;
+    public void setIdDetalle(Integer idDetalle) {
+        this.idDetalle = idDetalle;
     }
 
     public String getArticulo() {
@@ -48,6 +50,12 @@ public class FacturacionVO implements Serializable {
         this.valor = valor;
     }
 
-    
+    public Integer getIdFactura() {
+        return idFactura;
+    }
+
+    public void setIdFactura(Integer idFactura) {
+        this.idFactura = idFactura;
+    }
 }
 

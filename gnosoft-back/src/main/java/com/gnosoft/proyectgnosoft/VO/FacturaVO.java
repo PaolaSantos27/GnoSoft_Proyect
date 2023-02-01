@@ -6,24 +6,32 @@ package com.gnosoft.proyectgnosoft.VO;
 
 import java.io.Serializable;
 import java.sql.Date;
+import java.util.ArrayList;
+import java.util.List;
 
 
-
-public class FacturaDatosVO implements Serializable {
-    private Integer idDato;
+public class FacturaVO implements Serializable {
     private Integer idFactura;
     private String nombre;
     private String cliente; 
     private Date fecha; 
     private Integer subtotal; 
     private Integer iva;
-    private Integer total; 
-    
-    public FacturaDatosVO(){}
-    
-    public FacturaDatosVO(Integer idDato, Integer idFactura, String nombre, String cliente,
-            Date fecha, Integer subtotal, Integer iva, Integer total){
-        this.idDato= idDato;
+    private Integer total;
+    private List<DetalleVO> listaDetalle;
+
+    public List<DetalleVO> getListaDetalle() {
+        return listaDetalle;
+    }
+
+    public void setListaDetalle(List<DetalleVO> listaDetalle) {
+        this.listaDetalle = listaDetalle;
+    }
+
+    public FacturaVO(){}
+
+    public FacturaVO(Integer idFactura, String nombre, String cliente,
+                     Date fecha, Integer subtotal, Integer iva, Integer total){
         this.idFactura = idFactura;
         this.nombre = nombre;
         this.cliente = cliente;
@@ -31,15 +39,6 @@ public class FacturaDatosVO implements Serializable {
         this.subtotal = subtotal;
         this.iva = iva;
         this.total = total;
-    }
-    
-
-    public Integer getIdDato() {
-        return idDato;
-    }
-
-    public void setIdDato(Integer idDato) {
-        this.idDato = idDato;
     }
 
     public Integer getIdFactura() {
@@ -97,10 +96,7 @@ public class FacturaDatosVO implements Serializable {
     public void setTotal(Integer total) {
         this.total = total;
     }
-    
-    
-    
-    
+
 }
 
 
